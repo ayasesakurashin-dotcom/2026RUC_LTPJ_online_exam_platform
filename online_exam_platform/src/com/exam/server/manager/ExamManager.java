@@ -152,6 +152,9 @@ public class ExamManager {
 
     private void finishExam(Exam exam) {
         exam.setStatus(Exam.FINISHED);
+        if (!exam.hasEssayQuestions()) {
+            exam.setScoresPublished(true);
+        }
         save();
         TimerManager.getInstance().cancel(exam.getId());
 
@@ -165,24 +168,118 @@ public class ExamManager {
 
     private ExamResult gradeStudent(Exam exam, String studentId) {
         Map<String, String> answerMap = exam.getStudentAnswerMap(studentId);
-        int score = 0;
+        int autoScore = 0;
         int bCorr = 0, bTot = 0, mCorr = 0, mTot = 0, aCorr = 0, aTot = 0;
+        Map<String, Integer> essayScores = new HashMap<>();
+
         for (Question q : exam.getQuestions()) {
-            boolean correct = q.checkAnswer(answerMap.get(q.getId()));
-            if (correct) score += q.getScore();
-            String diff = q.getDifficulty();
-            if (Question.BASIC.equals(diff))      { bTot++; if (correct) bCorr++; }
-            else if (Question.MEDIUM.equals(diff)) { mTot++; if (correct) mCorr++; }
-            else                                   { aTot++; if (correct) aCorr++; }
+            if (q instanceof EssayQuestion) {
+                essayScores.put(q.getId(), -1);
+            } else {
+                boolean correct = q.checkAnswer(answerMap.get(q.getId()));
+                if (correct) autoScore += q.getScore();
+                String diff = q.getDifficulty();
+                if (Question.BASIC.equals(diff))      { bTot++; if (correct) bCorr++; }
+                else if (Question.MEDIUM.equals(diff)) { mTot++; if (correct) mCorr++; }
+                else                                   { aTot++; if (correct) aCorr++; }
+            }
         }
+
         answerMap.put("__SUBMITTED__", "true");
         exam.getStudentAnswers().put(studentId, answerMap);
+
         ExamResult result = new ExamResult(exam.getId(), exam.getTitle(), studentId,
-                score, exam.getTotalScore(), new HashMap<>(answerMap), System.currentTimeMillis());
+                autoScore, exam.getTotalScore(), new HashMap<>(answerMap), System.currentTimeMillis());
+        result.setAutoScore(autoScore);
+        result.setEssayScores(essayScores.isEmpty() ? null : new HashMap<>(essayScores));
         result.setBasicCorrect(bCorr);    result.setBasicTotal(bTot);
         result.setMediumCorrect(mCorr);   result.setMediumTotal(mTot);
         result.setAdvancedCorrect(aCorr); result.setAdvancedTotal(aTot);
         return result;
+    }
+
+    // ==================== 简答题批改 ====================
+
+    public synchronized String gradeEssay(String examId, String studentId,
+                                           String questionId, int awardedScore) {
+        Exam exam = getExam(examId);
+        if (exam == null) return "考试不存在";
+
+        Question target = null;
+        for (Question q : exam.getQuestions()) {
+            if (q.getId().equals(questionId)) { target = q; break; }
+        }
+        if (target == null || !(target instanceof EssayQuestion))
+            return "题目不存在或不是简答题";
+        if (awardedScore < 0 || awardedScore > target.getScore())
+            return "分数超出范围 (0~" + target.getScore() + ")";
+
+        ScoreManager sm = new ScoreManager();
+        ExamResult result = null;
+        for (ExamResult r : sm.getResultsByExam(examId)) {
+            if (r.getStudentId().equals(studentId)) { result = r; break; }
+        }
+        if (result == null) return "该学生未提交试卷";
+
+        Map<String, Integer> es = result.getEssayScores();
+        if (es == null) es = new HashMap<>();
+        es.put(questionId, awardedScore);
+        result.setEssayScores(es);
+
+        int total = result.getAutoScore();
+        for (int s : es.values()) {
+            if (s >= 0) total += s;
+        }
+        result.setScore(total);
+        sm.saveResult(result);
+        return "OK";
+    }
+
+    public synchronized String publishScores(String examId) {
+        Exam exam = getExam(examId);
+        if (exam == null) return "考试不存在";
+
+        ScoreManager sm = new ScoreManager();
+        List<ExamResult> results = sm.getResultsByExam(examId);
+        for (ExamResult r : results) {
+            Map<String, Integer> es = r.getEssayScores();
+            if (es != null) {
+                for (Map.Entry<String, Integer> entry : es.entrySet()) {
+                    if (entry.getValue() < 0) {
+                        return "尚有未批改的简答题（学生: " + r.getStudentId() + "），请批改完毕后再发布";
+                    }
+                }
+            }
+        }
+
+        exam.setScoresPublished(true);
+        save();
+        return "OK";
+    }
+
+    public synchronized Map<String, Object> getSubmissions(String examId) {
+        Exam exam = getExam(examId);
+        if (exam == null) return null;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("examId", exam.getId());
+        data.put("examTitle", exam.getTitle());
+        data.put("questions", (java.io.Serializable) new ArrayList<>(exam.getQuestions()));
+        data.put("scoresPublished", exam.isScoresPublished());
+
+        Map<String, Map<String, String>> submittedAnswers = new HashMap<>();
+        for (Map.Entry<String, Map<String, String>> entry : exam.getStudentAnswers().entrySet()) {
+            if (entry.getValue().containsKey("__SUBMITTED__")) {
+                submittedAnswers.put(entry.getKey(), new HashMap<>(entry.getValue()));
+            }
+        }
+        data.put("studentAnswers", (java.io.Serializable) submittedAnswers);
+
+        ScoreManager sm = new ScoreManager();
+        List<ExamResult> results = sm.getResultsByExam(examId);
+        data.put("results", (java.io.Serializable) new ArrayList<>(results));
+
+        return data;
     }
 
     // ==================== 成绩查询 ====================

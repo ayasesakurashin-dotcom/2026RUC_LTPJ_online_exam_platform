@@ -97,6 +97,7 @@ public class TeacherGUI extends JFrame {
         tabbedPane.setFont(ModernTheme.TAB_FONT);
         tabbedPane.addTab("  发布考试  ", buildCreateTab());
         tabbedPane.addTab("  我的考试  ", buildMyExamTab());
+        tabbedPane.addTab("  批改简答题  ", buildGradingTab());
         tabbedPane.addTab("  成绩统计  ", buildScoreTab());
 
         root.add(tabbedPane, BorderLayout.CENTER);
@@ -159,13 +160,15 @@ public class TeacherGUI extends JFrame {
         btnBar.setBackground(ModernTheme.bg());
         JButton addChoice = ModernTheme.primaryButton("＋ 选择题");
         JButton addBlank  = ModernTheme.secondaryButton("＋ 填空题");
+        JButton addEssay  = ModernTheme.secondaryButton("＋ 简答题");
         JButton removeQ   = ModernTheme.secondaryButton("✕ 删除");
         JButton publish   = ModernTheme.primaryButton("✔ 发布考试");
         addChoice.addActionListener(e -> showAddChoiceDialog());
         addBlank.addActionListener(e -> showAddBlankDialog());
+        addEssay.addActionListener(e -> showAddEssayDialog());
         removeQ.addActionListener(e -> removeSelectedQuestion());
         publish.addActionListener(e -> publishExam());
-        btnBar.add(addChoice); btnBar.add(addBlank); btnBar.add(removeQ);
+        btnBar.add(addChoice); btnBar.add(addBlank); btnBar.add(addEssay); btnBar.add(removeQ);
         btnBar.add(Box.createHorizontalStrut(20)); btnBar.add(publish);
         panel.add(btnBar, BorderLayout.SOUTH);
 
@@ -351,6 +354,385 @@ public class TeacherGUI extends JFrame {
         } catch (Exception ex) {
             setStatus("输入格式错误");
         }
+    }
+
+    private void showAddEssayDialog() {
+        JTextField contentField = ModernTheme.textField(24);
+        JTextField scoreField = ModernTheme.textField(6);
+        scoreField.setText("10");
+        JTextArea refAnswerArea = new JTextArea(4, 24);
+        refAnswerArea.setFont(ModernTheme.BODY_FONT);
+        refAnswerArea.setBackground(ModernTheme.surface());
+        refAnswerArea.setForeground(ModernTheme.text());
+        refAnswerArea.setLineWrap(true);
+        refAnswerArea.setWrapStyleWord(true);
+
+        JRadioButton basicR = new JRadioButton("基础题", true);
+        JRadioButton mediumR = new JRadioButton("中等题");
+        JRadioButton advancedR = new JRadioButton("提高题");
+        ButtonGroup diffGroup = new ButtonGroup();
+        diffGroup.add(basicR); diffGroup.add(mediumR); diffGroup.add(advancedR);
+        basicR.setBackground(ModernTheme.surface()); basicR.setForeground(ModernTheme.text());
+        mediumR.setBackground(ModernTheme.surface()); mediumR.setForeground(ModernTheme.text());
+        advancedR.setBackground(ModernTheme.surface()); advancedR.setForeground(ModernTheme.text());
+        JPanel diffPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        diffPanel.setBackground(ModernTheme.surface());
+        diffPanel.add(basicR); diffPanel.add(mediumR); diffPanel.add(advancedR);
+
+        JPanel panel = new JPanel(new GridLayout(4, 2, 6, 8));
+        panel.setBackground(ModernTheme.surface());
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        panel.add(label("题目内容"));   panel.add(contentField);
+        panel.add(label("分值"));       panel.add(scoreField);
+        panel.add(label("难度（必选）")); panel.add(diffPanel);
+        panel.add(label("参考答案"));   panel.add(new JScrollPane(refAnswerArea));
+
+        int r = JOptionPane.showConfirmDialog(this, panel, "添加简答题",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (r != JOptionPane.OK_OPTION) return;
+
+        try {
+            String diff = basicR.isSelected() ? "BASIC" : mediumR.isSelected() ? "MEDIUM" : "ADVANCED";
+            Question q = QuestionFactory.createEssay(
+                    contentField.getText().trim(),
+                    Integer.parseInt(scoreField.getText().trim()),
+                    diff,
+                    refAnswerArea.getText().trim());
+            pendingQuestions.add(q);
+            questionListModel.addElement("📝 [" + diffLabel(diff) + "] " + q.getContent() + "  [" + q.getScore() + "分]");
+        } catch (Exception ex) {
+            setStatus("输入格式错误");
+        }
+    }
+
+    // ==================== Tab: 批改简答题 ====================
+
+    private DefaultTableModel gradingExamModel, gradingStudentModel;
+    private JTable gradingExamTable, gradingStudentTable;
+    private JPanel gradingPanel;
+    private JScrollPane gradingScroll;
+    private String currentGradingExamId;
+    private List<Question> currentGradingQuestions;
+    private Map<String, Map<String, String>> currentStudentAnswers;
+    private Map<String, ExamResult> currentResultMap;
+    private String currentGradingStudentId;
+    private List<JTextField> essayScoreFields;
+    private List<String> essayQuestionIds;
+
+    private JPanel buildGradingTab() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.setBackground(ModernTheme.bg());
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+        // Left: exam list + student list
+        JPanel leftPanel = new JPanel(new BorderLayout(0, 8));
+        leftPanel.setBackground(ModernTheme.bg());
+        leftPanel.setPreferredSize(new Dimension(320, 0));
+
+        // Exam list
+        JPanel examPanel = new JPanel(new BorderLayout(0, 4));
+        examPanel.setBackground(ModernTheme.bg());
+        examPanel.setBorder(BorderFactory.createTitledBorder(
+                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
+                "含简答题的考试", javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+
+        gradingExamModel = new DefaultTableModel(new String[]{"考试ID", "标题", "发布状态"}, 0);
+        gradingExamTable = ModernTheme.table(gradingExamModel);
+        examPanel.add(ModernTheme.tableScroll(gradingExamTable), BorderLayout.CENTER);
+
+        JPanel examBtnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        examBtnBar.setBackground(ModernTheme.bg());
+        JButton refreshExams = ModernTheme.secondaryButton("↻ 刷新");
+        JButton selectExam = ModernTheme.primaryButton("→ 查看提交");
+        refreshExams.addActionListener(e -> loadGradingExams());
+        selectExam.addActionListener(e -> loadGradingStudents());
+        examBtnBar.add(refreshExams); examBtnBar.add(selectExam);
+        examPanel.add(examBtnBar, BorderLayout.SOUTH);
+        leftPanel.add(examPanel, BorderLayout.NORTH);
+
+        // Student list
+        JPanel studentPanel = new JPanel(new BorderLayout(0, 4));
+        studentPanel.setBackground(ModernTheme.bg());
+        studentPanel.setBorder(BorderFactory.createTitledBorder(
+                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
+                "已提交学生", javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+
+        gradingStudentModel = new DefaultTableModel(new String[]{"学生", "批改状态"}, 0);
+        gradingStudentTable = ModernTheme.table(gradingStudentModel);
+        studentPanel.add(ModernTheme.tableScroll(gradingStudentTable), BorderLayout.CENTER);
+
+        JPanel stuBtnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        stuBtnBar.setBackground(ModernTheme.bg());
+        JButton selectStudent = ModernTheme.primaryButton("→ 批改");
+        selectStudent.addActionListener(e -> loadStudentEssays());
+        stuBtnBar.add(selectStudent);
+        studentPanel.add(stuBtnBar, BorderLayout.SOUTH);
+        leftPanel.add(studentPanel, BorderLayout.CENTER);
+
+        // Right: grading form
+        gradingPanel = new JPanel();
+        gradingPanel.setLayout(new BoxLayout(gradingPanel, BoxLayout.Y_AXIS));
+        gradingPanel.setBackground(ModernTheme.bg());
+        gradingPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JLabel placeholder = new JLabel("请先选择考试和学生");
+        placeholder.setFont(ModernTheme.BODY_FONT);
+        placeholder.setForeground(ModernTheme.subtext());
+        gradingPanel.add(placeholder);
+
+        gradingScroll = new JScrollPane(gradingPanel);
+        gradingScroll.setBorder(BorderFactory.createTitledBorder(
+                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
+                "简答题批改", javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+        gradingScroll.setBackground(ModernTheme.bg());
+        gradingScroll.getViewport().setBackground(ModernTheme.bg());
+        gradingScroll.getVerticalScrollBar().setUnitIncrement(16);
+        ModernTheme.styleScrollBar(gradingScroll);
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, gradingScroll);
+        split.setDividerLocation(320);
+        split.setResizeWeight(0.3);
+        split.setBorder(null);
+        panel.add(split, BorderLayout.CENTER);
+
+        // Bottom buttons
+        JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        bottomBar.setBackground(ModernTheme.bg());
+        JButton saveBtn = ModernTheme.primaryButton("✔ 保存评分");
+        JButton publishBtn = ModernTheme.dangerButton("📢 发布成绩");
+        saveBtn.addActionListener(e -> saveEssayGrades());
+        publishBtn.addActionListener(e -> publishExamScores());
+        bottomBar.add(saveBtn); bottomBar.add(publishBtn);
+        panel.add(bottomBar, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private void loadGradingExams() {
+        Map<String, String> d = new HashMap<>(); d.put("username", username); d.put("role", "TEACHER");
+        Response resp = sendAndWait(new Request(MessageType.GET_EXAMS, (Serializable) d));
+        if (resp != null && "OK".equals(resp.getStatus())) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> all = (List<Map<String, Object>>) resp.getData();
+            SwingUtilities.invokeLater(() -> {
+                gradingExamModel.setRowCount(0);
+                for (Map<String, Object> e : all) {
+                    if (username.equals(e.get("teacherId")) && Boolean.TRUE.equals(e.get("hasEssayQuestions"))) {
+                        String pubStatus = Boolean.TRUE.equals(e.get("scoresPublished")) ? "已发布" : "未发布";
+                        gradingExamModel.addRow(new Object[]{e.get("id"), e.get("title"), pubStatus});
+                    }
+                }
+            });
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadGradingStudents() {
+        int row = gradingExamTable.getSelectedRow();
+        if (row < 0) { setStatus("请先选择一场考试"); return; }
+        currentGradingExamId = (String) gradingExamModel.getValueAt(row, 0);
+
+        Map<String, String> d = new HashMap<>(); d.put("examId", currentGradingExamId);
+        Response resp = sendAndWait(new Request(MessageType.GET_SUBMISSIONS, (Serializable) d));
+        if (resp == null || !"OK".equals(resp.getStatus())) {
+            setStatus(resp != null ? resp.getMessage() : "加载失败"); return;
+        }
+
+        Map<String, Object> data = (Map<String, Object>) resp.getData();
+        currentGradingQuestions = (List<Question>) data.get("questions");
+        currentStudentAnswers = (Map<String, Map<String, String>>) data.get("studentAnswers");
+        List<ExamResult> results = (List<ExamResult>) data.get("results");
+        currentResultMap = new HashMap<>();
+        for (ExamResult r : results) currentResultMap.put(r.getStudentId(), r);
+
+        SwingUtilities.invokeLater(() -> {
+            gradingStudentModel.setRowCount(0);
+            for (String sid : currentStudentAnswers.keySet()) {
+                ExamResult r = currentResultMap.get(sid);
+                String status = "未批改";
+                if (r != null && r.getEssayScores() != null) {
+                    boolean allGraded = true;
+                    for (int s : r.getEssayScores().values()) {
+                        if (s < 0) { allGraded = false; break; }
+                    }
+                    status = allGraded ? "已批改" : "部分批改";
+                }
+                gradingStudentModel.addRow(new Object[]{sid, status});
+            }
+            clearGradingPanel();
+        });
+    }
+
+    private void loadStudentEssays() {
+        int row = gradingStudentTable.getSelectedRow();
+        if (row < 0) { setStatus("请先选择一个学生"); return; }
+        currentGradingStudentId = (String) gradingStudentModel.getValueAt(row, 0);
+
+        if (currentGradingQuestions == null || currentStudentAnswers == null) {
+            setStatus("请先加载考试数据"); return;
+        }
+
+        Map<String, String> answers = currentStudentAnswers.get(currentGradingStudentId);
+        if (answers == null) { setStatus("该学生无答卷数据"); return; }
+
+        ExamResult result = currentResultMap.get(currentGradingStudentId);
+        Map<String, Integer> existingScores = (result != null && result.getEssayScores() != null)
+                ? result.getEssayScores() : new HashMap<>();
+
+        essayScoreFields = new ArrayList<>();
+        essayQuestionIds = new ArrayList<>();
+
+        gradingPanel.removeAll();
+        int idx = 0;
+        for (Question q : currentGradingQuestions) {
+            if (!(q instanceof EssayQuestion)) continue;
+            idx++;
+            EssayQuestion eq = (EssayQuestion) q;
+            String studentAnswer = answers.getOrDefault(q.getId(), "（未作答）");
+            int existingScore = existingScores.getOrDefault(q.getId(), -1);
+
+            JPanel card = new JPanel();
+            card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+            card.setBackground(ModernTheme.surface());
+            card.setBorder(BorderFactory.createCompoundBorder(
+                    new ModernTheme.RoundedBorder(ModernTheme.border(), 10, 1),
+                    BorderFactory.createEmptyBorder(12, 16, 12, 16)));
+            card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
+            card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            JLabel titleLabel = new JLabel("简答题 " + idx + "  (" + eq.getScore() + "分)");
+            titleLabel.setFont(new Font("Microsoft YaHei", Font.BOLD, 14));
+            titleLabel.setForeground(ModernTheme.ACCENT);
+            titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            card.add(titleLabel);
+            card.add(Box.createVerticalStrut(6));
+
+            JLabel contentLabel = new JLabel("<html><b>题目：</b>" + eq.getContent() + "</html>");
+            contentLabel.setFont(ModernTheme.BODY_FONT);
+            contentLabel.setForeground(ModernTheme.text());
+            contentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            card.add(contentLabel);
+            card.add(Box.createVerticalStrut(4));
+
+            JLabel refLabel = new JLabel("<html><b>参考答案：</b>" + eq.getReferenceAnswer() + "</html>");
+            refLabel.setFont(ModernTheme.BODY_FONT);
+            refLabel.setForeground(ModernTheme.subtext());
+            refLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            card.add(refLabel);
+            card.add(Box.createVerticalStrut(6));
+
+            JLabel ansLabel = new JLabel("<html><b>学生答案：</b></html>");
+            ansLabel.setFont(ModernTheme.BODY_FONT);
+            ansLabel.setForeground(ModernTheme.text());
+            ansLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            card.add(ansLabel);
+
+            JTextArea ansArea = new JTextArea(studentAnswer);
+            ansArea.setFont(ModernTheme.BODY_FONT);
+            ansArea.setBackground(ModernTheme.bg());
+            ansArea.setForeground(ModernTheme.text());
+            ansArea.setEditable(false);
+            ansArea.setLineWrap(true);
+            ansArea.setWrapStyleWord(true);
+            ansArea.setRows(3);
+            JScrollPane sp = new JScrollPane(ansArea);
+            sp.setAlignmentX(Component.LEFT_ALIGNMENT);
+            sp.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+            sp.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 6, 1));
+            card.add(sp);
+            card.add(Box.createVerticalStrut(6));
+
+            JPanel scoreRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+            scoreRow.setBackground(ModernTheme.surface());
+            scoreRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel scoreHint = new JLabel("评分 (0~" + eq.getScore() + ")：");
+            scoreHint.setFont(new Font("Microsoft YaHei", Font.BOLD, 13));
+            scoreHint.setForeground(ModernTheme.text());
+            scoreRow.add(scoreHint);
+            JTextField scoreField = ModernTheme.textField(6);
+            if (existingScore >= 0) scoreField.setText(String.valueOf(existingScore));
+            scoreRow.add(scoreField);
+            JLabel maxLabel = new JLabel(" / " + eq.getScore());
+            maxLabel.setFont(ModernTheme.BODY_FONT);
+            maxLabel.setForeground(ModernTheme.subtext());
+            scoreRow.add(maxLabel);
+            card.add(scoreRow);
+
+            essayScoreFields.add(scoreField);
+            essayQuestionIds.add(q.getId());
+
+            gradingPanel.add(card);
+            gradingPanel.add(Box.createVerticalStrut(10));
+        }
+
+        gradingPanel.revalidate();
+        gradingPanel.repaint();
+        gradingScroll.getVerticalScrollBar().setValue(0);
+    }
+
+    private void saveEssayGrades() {
+        if (currentGradingExamId == null || currentGradingStudentId == null
+                || essayScoreFields == null || essayScoreFields.isEmpty()) {
+            setStatus("请先选择考试和学生"); return;
+        }
+
+        for (int i = 0; i < essayScoreFields.size(); i++) {
+            String text = essayScoreFields.get(i).getText().trim();
+            if (text.isEmpty()) continue;
+
+            try {
+                int score = Integer.parseInt(text);
+                Map<String, String> d = new HashMap<>();
+                d.put("examId", currentGradingExamId);
+                d.put("studentId", currentGradingStudentId);
+                d.put("questionId", essayQuestionIds.get(i));
+                d.put("score", String.valueOf(score));
+                Response resp = sendAndWait(new Request(MessageType.GRADE_ESSAY, (Serializable) d));
+                if (resp == null || !"OK".equals(resp.getStatus())) {
+                    setStatus("评分失败: " + (resp != null ? resp.getMessage() : "超时"));
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                setStatus("第 " + (i + 1) + " 题分数格式错误");
+                return;
+            }
+        }
+        setStatus("评分保存成功");
+        loadGradingStudents();
+    }
+
+    private void publishExamScores() {
+        if (currentGradingExamId == null) { setStatus("请先选择一场考试"); return; }
+
+        int cfm = JOptionPane.showConfirmDialog(this,
+                "确认发布成绩？发布后学生将可以查看分数。", "确认发布",
+                JOptionPane.YES_NO_OPTION);
+        if (cfm != JOptionPane.YES_OPTION) return;
+
+        Map<String, String> d = new HashMap<>(); d.put("examId", currentGradingExamId);
+        Response resp = sendAndWait(new Request(MessageType.PUBLISH_SCORES, (Serializable) d));
+        if (resp != null && "OK".equals(resp.getStatus())) {
+            setStatus("成绩已发布！");
+            loadGradingExams();
+        } else {
+            setStatus(resp != null ? resp.getMessage() : "发布失败");
+        }
+    }
+
+    private void clearGradingPanel() {
+        gradingPanel.removeAll();
+        JLabel placeholder = new JLabel("请选择学生进行批改");
+        placeholder.setFont(ModernTheme.BODY_FONT);
+        placeholder.setForeground(ModernTheme.subtext());
+        gradingPanel.add(placeholder);
+        gradingPanel.revalidate();
+        gradingPanel.repaint();
     }
 
     private String diffRate(int correct, int total) {
