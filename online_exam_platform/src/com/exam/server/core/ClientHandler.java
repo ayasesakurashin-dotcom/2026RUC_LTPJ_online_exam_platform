@@ -70,6 +70,9 @@ public class ClientHandler implements Runnable, ExamObserver {
                 case SUBMIT_ANSWER:return handleSubmitAnswer(request);
                 case SUBMIT_EXAM:return handleSubmitExam(request);
                 case GET_SCORES: return handleGetScores(request);
+                case GET_SUBMISSIONS: return handleGetSubmissions(request);
+                case GRADE_ESSAY: return handleGradeEssay(request);
+                case PUBLISH_SCORES: return handlePublishScores(request);
                 default:
                     return Response.error(type, "Unknown message type");
             }
@@ -169,7 +172,9 @@ public class ClientHandler implements Runnable, ExamObserver {
             m.put("totalScore", e.getTotalScore());
             m.put("joinedCount", e.getJoinedCount());
 
-            // 学生已经交卷则不再显示
+            m.put("hasEssayQuestions", e.hasEssayQuestions());
+            m.put("scoresPublished", e.isScoresPublished());
+
             if ("STUDENT".equals(role) && examManager.hasSubmitted(e.getId(), username)) {
                 m.put("submitted", true);
             } else {
@@ -242,13 +247,61 @@ public class ClientHandler implements Runnable, ExamObserver {
         String username = data.get("username");
 
         List<ExamResult> resultList;
-        if ("STUDENT".equals(role)) {
-            resultList = new ScoreManager().getResultsByStudent(username);
-        } else {
-            // 教师和管理员看全部
+        if ("TEACHER".equals(role)) {
             resultList = new ScoreManager().getAllResults();
+        } else {
+            List<ExamResult> source = "STUDENT".equals(role)
+                    ? new ScoreManager().getResultsByStudent(username)
+                    : new ScoreManager().getAllResults();
+            resultList = new ArrayList<>();
+            for (ExamResult r : source) {
+                Exam exam = examManager.getExam(r.getExamId());
+                if (exam == null) continue;
+                if (!exam.hasEssayQuestions() || exam.isScoresPublished()) {
+                    resultList.add(r);
+                }
+            }
         }
         return Response.ok(MessageType.GET_SCORES, (Serializable) resultList);
+    }
+
+    private Response handleGetSubmissions(Request request) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> data = (Map<String, String>) request.getData();
+        String examId = data.get("examId");
+
+        Map<String, Object> submissions = examManager.getSubmissions(examId);
+        if (submissions == null) {
+            return Response.error(MessageType.GET_SUBMISSIONS, "考试不存在");
+        }
+        return Response.ok(MessageType.GET_SUBMISSIONS, (Serializable) submissions);
+    }
+
+    private Response handleGradeEssay(Request request) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> data = (Map<String, String>) request.getData();
+        String examId = data.get("examId");
+        String studentId = data.get("studentId");
+        String questionId = data.get("questionId");
+        int score = Integer.parseInt(data.get("score"));
+
+        String result = examManager.gradeEssay(examId, studentId, questionId, score);
+        if ("OK".equals(result)) {
+            return Response.ok(MessageType.GRADE_ESSAY, "评分成功", null);
+        }
+        return Response.error(MessageType.GRADE_ESSAY, result);
+    }
+
+    private Response handlePublishScores(Request request) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> data = (Map<String, String>) request.getData();
+        String examId = data.get("examId");
+
+        String result = examManager.publishScores(examId);
+        if ("OK".equals(result)) {
+            return Response.ok(MessageType.PUBLISH_SCORES, "成绩已发布", null);
+        }
+        return Response.error(MessageType.PUBLISH_SCORES, result);
     }
 
     // ==================== 构建学生端考试数据(不含答案) ====================

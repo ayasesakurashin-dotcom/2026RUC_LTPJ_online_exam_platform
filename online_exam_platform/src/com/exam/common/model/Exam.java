@@ -21,6 +21,7 @@ public class Exam implements Serializable {
     private List<String> joinedStudentIds;
     // studentId -> (questionId -> answer)
     private Map<String, Map<String, String>> studentAnswers;
+    private boolean scoresPublished;
 
     public Exam() {
         this.questions = new ArrayList<>();
@@ -94,5 +95,15 @@ public class Exam implements Serializable {
 
     public Map<String, String> getStudentAnswerMap(String studentId) {
         return studentAnswers.getOrDefault(studentId, new HashMap<>());
+    }
+
+    public boolean isScoresPublished() { return scoresPublished; }
+    public void setScoresPublished(boolean v) { this.scoresPublished = v; }
+
+    public boolean hasEssayQuestions() {
+        for (Question q : questions) {
+            if (q instanceof EssayQuestion) return true;
+        }
+        return false;
     }
 }

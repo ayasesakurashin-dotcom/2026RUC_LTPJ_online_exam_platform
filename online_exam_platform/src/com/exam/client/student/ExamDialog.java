@@ -144,7 +144,11 @@ public class ExamDialog extends JDialog {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(ModernTheme.surface());
         card.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 10, 1));
-        card.setMaximumSize(new Dimension(710, 260));
+
+        String typeTag = (q instanceof ChoiceQuestion) ? "选择" :
+                         (q instanceof EssayQuestion) ? "简答" : "填空";
+        int maxH = (q instanceof EssayQuestion) ? 360 : 260;
+        card.setMaximumSize(new Dimension(710, maxH));
 
         // 题头
         JPanel header = new JPanel(new BorderLayout());
@@ -153,7 +157,7 @@ public class ExamDialog extends JDialog {
 
         String diff = q.getDifficulty();
         String diffText = "BASIC".equals(diff) ? "基础题" : "MEDIUM".equals(diff) ? "中等题" : "提高题";
-        JLabel numLabel = new JLabel("第 " + (index + 1) + " 题  [" + diffText + "]");
+        JLabel numLabel = new JLabel("第 " + (index + 1) + " 题  [" + typeTag + " · " + diffText + "]");
         numLabel.setFont(new Font("Microsoft YaHei", Font.BOLD, 14));
         numLabel.setForeground(ModernTheme.ACCENT);
 
@@ -192,6 +196,22 @@ public class ExamDialog extends JDialog {
                 answerArea.add(rb);
             }
             answerComponents.add(answerArea);
+        } else if (q instanceof EssayQuestion) {
+            answerArea.setLayout(new BorderLayout(0, 4));
+            JLabel hint = new JLabel("请输入你的答案：");
+            hint.setFont(ModernTheme.BODY_FONT);
+            hint.setForeground(ModernTheme.subtext());
+            answerArea.add(hint, BorderLayout.NORTH);
+            JTextArea ta = new JTextArea(5, 40);
+            ta.setFont(ModernTheme.BODY_FONT);
+            ta.setBackground(ModernTheme.surface());
+            ta.setForeground(ModernTheme.text());
+            ta.setLineWrap(true);
+            ta.setWrapStyleWord(true);
+            JScrollPane sp = new JScrollPane(ta);
+            sp.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 6, 1));
+            answerArea.add(sp, BorderLayout.CENTER);
+            answerComponents.add(ta);
         } else if (q instanceof BlankQuestion) {
             answerArea.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
             JLabel hint = new JLabel("答案：");
@@ -262,8 +282,12 @@ public class ExamDialog extends JDialog {
 
                 if (submitLatch.await(30, TimeUnit.SECONDS)) {
                     ExamDialog.this.dispose();
+                    boolean hasEssay = questions.stream().anyMatch(qq -> qq instanceof EssayQuestion);
+                    String msg = hasEssay
+                            ? "交卷成功！本次考试含简答题，待教师批改后发布成绩。"
+                            : "交卷成功！考试结束后可在\"我的成绩\"中查看分数。";
                     SwingUtilities.invokeLater(() ->
-                        JOptionPane.showMessageDialog(parent, "交卷成功！考试结束后可在\"我的成绩\"中查看分数。",
+                        JOptionPane.showMessageDialog(parent, msg,
                                 "交卷成功", JOptionPane.INFORMATION_MESSAGE));
                 } else {
                     ExamDialog.this.dispose();
@@ -290,6 +314,8 @@ public class ExamDialog extends JDialog {
                         answer = ((JRadioButton) c).getActionCommand();
                     }
                 }
+            } else if (q instanceof EssayQuestion && comp instanceof JTextArea) {
+                answer = ((JTextArea) comp).getText().trim();
             } else if (q instanceof BlankQuestion && comp instanceof JTextField) {
                 answer = ((JTextField) comp).getText().trim();
             }

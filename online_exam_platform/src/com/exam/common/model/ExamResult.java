@@ -14,6 +14,9 @@ public class ExamResult implements Serializable {
     private Map<String, String> answerMap;
     private long submitTime;
 
+    private int autoScore;
+    private Map<String, Integer> essayScores;
+
     // 按难度分类统计
     private int basicCorrect,    basicTotal;
     private int mediumCorrect,   mediumTotal;
@@ -67,4 +70,10 @@ public class ExamResult implements Serializable {
     public void setAdvancedCorrect(int v) { this.advancedCorrect = v; }
     public int getAdvancedTotal()   { return advancedTotal; }
     public void setAdvancedTotal(int v)   { this.advancedTotal = v; }
+
+    public int getAutoScore() { return autoScore; }
+    public void setAutoScore(int v) { this.autoScore = v; }
+
+    public Map<String, Integer> getEssayScores() { return essayScores; }
+    public void setEssayScores(Map<String, Integer> v) { this.essayScores = v; }
 }

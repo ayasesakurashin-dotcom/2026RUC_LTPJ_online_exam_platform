@@ -14,5 +14,8 @@ public enum MessageType {
     SUBMIT_ANSWER,
     SUBMIT_EXAM,
     EXAM_FINISHED,
-    GET_SCORES
+    GET_SCORES,
+    GET_SUBMISSIONS,
+    GRADE_ESSAY,
+    PUBLISH_SCORES
 }
