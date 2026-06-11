@@ -204,6 +204,7 @@ public class ExamManager {
                                            String questionId, int awardedScore) {
         Exam exam = getExam(examId);
         if (exam == null) return "考试不存在";
+        if (!Exam.FINISHED.equals(exam.getStatus())) return "考试尚未结束，无法批改";
 
         Question target = null;
         for (Question q : exam.getQuestions()) {
@@ -238,6 +239,7 @@ public class ExamManager {
     public synchronized String publishScores(String examId) {
         Exam exam = getExam(examId);
         if (exam == null) return "考试不存在";
+        if (!Exam.FINISHED.equals(exam.getStatus())) return "考试尚未结束，无法发布成绩";
 
         ScoreManager sm = new ScoreManager();
         List<ExamResult> results = sm.getResultsByExam(examId);

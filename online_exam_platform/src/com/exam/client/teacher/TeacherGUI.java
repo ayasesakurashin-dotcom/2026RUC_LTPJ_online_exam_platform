@@ -523,7 +523,8 @@ public class TeacherGUI extends JFrame {
             SwingUtilities.invokeLater(() -> {
                 gradingExamModel.setRowCount(0);
                 for (Map<String, Object> e : all) {
-                    if (username.equals(e.get("teacherId")) && Boolean.TRUE.equals(e.get("hasEssayQuestions"))) {
+                    if (username.equals(e.get("teacherId")) && Boolean.TRUE.equals(e.get("hasEssayQuestions"))
+                            && "FINISHED".equals(e.get("status"))) {
                         String pubStatus = Boolean.TRUE.equals(e.get("scoresPublished")) ? "已发布" : "未发布";
                         gradingExamModel.addRow(new Object[]{e.get("id"), e.get("title"), pubStatus});
                     }
