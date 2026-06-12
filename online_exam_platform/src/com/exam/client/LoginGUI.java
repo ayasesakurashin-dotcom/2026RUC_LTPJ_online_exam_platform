@@ -9,13 +9,12 @@ import com.exam.client.teacher.TeacherGUI;
 import com.exam.common.protocol.MessageType;
 import com.exam.common.protocol.Request;
 import com.exam.common.protocol.Response;
-
-import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.swing.*;
 
 public class LoginGUI extends JFrame {
 
@@ -38,39 +37,45 @@ public class LoginGUI extends JFrame {
     }
 
     private void initUI() {
-        setTitle("在线考试系统");
+        // 设置窗口背景色（天蓝色）
+        getContentPane().setBackground(new Color(135, 206, 235));
+        
+        setTitle("🎓 在线考试系统 - 欢迎登录");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(520, 600);
         setLocationRelativeTo(null);
         setResizable(false);
 
         JPanel root = new JPanel(new GridBagLayout());
-        root.setBackground(ModernTheme.bg());
+        root.setBackground(new Color(135, 206, 235));
         GridBagConstraints gc = new GridBagConstraints();
         gc.gridx = 0; gc.fill = GridBagConstraints.HORIZONTAL;
         gc.insets = new Insets(0, 0, 0, 0);
 
-        // ---- 主体卡片 ----
+        // ---- 主体卡片（白色背景）----
         JPanel card = new JPanel();
-        card.setBackground(ModernTheme.surface());
-        card.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 16, 1));
+        card.setBackground(Color.WHITE);  // 改为白色
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        ));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setPreferredSize(new Dimension(440, 380));
 
-        // Logo 区
+        // Logo 区（白色背景）
         JPanel logoPanel = new JPanel(new BorderLayout());
-        logoPanel.setBackground(ModernTheme.surface());
+        logoPanel.setBackground(Color.WHITE);  // 改为白色
         logoPanel.setBorder(new javax.swing.border.EmptyBorder(30, 30, 0, 30));
         logoPanel.setMaximumSize(new Dimension(440, 90));
 
-        JLabel icon = new JLabel("📝"); // 📝
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
+        JLabel icon = new JLabel("📝");
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
         icon.setHorizontalAlignment(SwingConstants.CENTER);
         logoPanel.add(icon, BorderLayout.CENTER);
 
         JLabel title = new JLabel("在线考试平台", SwingConstants.CENTER);
-        title.setFont(new Font("Microsoft YaHei", Font.BOLD, 24));
-        title.setForeground(ModernTheme.text());
+        title.setFont(new Font("微软雅黑", Font.BOLD, 26));
+        title.setForeground(new Color(25, 25, 112));
         logoPanel.add(title, BorderLayout.SOUTH);
 
         card.add(logoPanel);
@@ -78,43 +83,45 @@ public class LoginGUI extends JFrame {
 
         // 副标题
         JLabel subtitle = new JLabel("专业的在线考试解决方案", SwingConstants.CENTER);
-        subtitle.setFont(ModernTheme.SMALL_FONT);
-        subtitle.setForeground(ModernTheme.subtext());
+        subtitle.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        subtitle.setForeground(new Color(100, 100, 100));
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(subtitle);
         card.add(Box.createVerticalStrut(28));
 
-        // 用户名输入
+        // 用户名输入区（白色背景）
         JPanel fieldPanel = new JPanel();
-        fieldPanel.setBackground(ModernTheme.surface());
+        fieldPanel.setBackground(Color.WHITE);
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
         fieldPanel.setBorder(new javax.swing.border.EmptyBorder(0, 30, 0, 30));
         fieldPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         fieldPanel.setMaximumSize(new Dimension(440, 160));
 
         JLabel userLabel = new JLabel("用户名");
-        userLabel.setFont(new Font("Microsoft YaHei", Font.BOLD, 12));
-        userLabel.setForeground(ModernTheme.subtext());
+        userLabel.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        userLabel.setForeground(new Color(80, 80, 80));
         userLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         fieldPanel.add(userLabel);
         fieldPanel.add(Box.createVerticalStrut(4));
 
-        usernameField = ModernTheme.textField(0);
+        usernameField = new JTextField();
+        usernameField.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        usernameField.setPreferredSize(new Dimension(380, 40));
         usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         usernameField.setAlignmentX(Component.LEFT_ALIGNMENT);
-        // Placeholder effect
-        usernameField.setForeground(ModernTheme.text());
         fieldPanel.add(usernameField);
         fieldPanel.add(Box.createVerticalStrut(14));
 
         JLabel passLabel = new JLabel("密码");
-        passLabel.setFont(new Font("Microsoft YaHei", Font.BOLD, 12));
-        passLabel.setForeground(ModernTheme.subtext());
+        passLabel.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        passLabel.setForeground(new Color(80, 80, 80));
         passLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         fieldPanel.add(passLabel);
         fieldPanel.add(Box.createVerticalStrut(4));
 
-        passwordField = ModernTheme.passwordField(0);
+        passwordField = new JPasswordField();
+        passwordField.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        passwordField.setPreferredSize(new Dimension(380, 40));
         passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         passwordField.setAlignmentX(Component.LEFT_ALIGNMENT);
         fieldPanel.add(passwordField);
@@ -124,30 +131,36 @@ public class LoginGUI extends JFrame {
 
         // 登录按钮
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        btnPanel.setBackground(ModernTheme.surface());
+        btnPanel.setBackground(Color.WHITE);
         btnPanel.setBorder(new javax.swing.border.EmptyBorder(0, 30, 0, 30));
         btnPanel.setMaximumSize(new Dimension(440, 50));
         btnPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        loginBtn = ModernTheme.primaryButton("登  录");
+        loginBtn = new JButton("登  录");
+        loginBtn.setBackground(new Color(25, 100, 180));
+        loginBtn.setForeground(Color.WHITE);
+        loginBtn.setFont(new Font("微软雅黑", Font.BOLD, 16));
+        loginBtn.setFocusPainted(false);
+        loginBtn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         loginBtn.setPreferredSize(new Dimension(380, 46));
+        loginBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         loginBtn.addActionListener(e -> doLogin());
         btnPanel.add(loginBtn);
 
         card.add(btnPanel);
         card.add(Box.createVerticalStrut(8));
 
-        // 注册链接 + 状态
+        // 注册链接 + 状态（白色背景）
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        bottomPanel.setBackground(ModernTheme.surface());
+        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new javax.swing.border.EmptyBorder(0, 30, 24, 30));
         bottomPanel.setMaximumSize(new Dimension(440, 50));
         bottomPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         registerLink = new JButton("没有账号？立即注册");
-        registerLink.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
-        registerLink.setForeground(ModernTheme.ACCENT);
-        registerLink.setBackground(ModernTheme.surface());
+        registerLink.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        registerLink.setForeground(new Color(70, 130, 200));
+        registerLink.setBackground(Color.WHITE);
         registerLink.setBorder(BorderFactory.createEmptyBorder());
         registerLink.setFocusPainted(false);
         registerLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -157,10 +170,10 @@ public class LoginGUI extends JFrame {
 
         card.add(bottomPanel);
 
-        // 状态标签(卡片外部)
+        // 状态标签
         statusLabel = new JLabel(" ", SwingConstants.CENTER);
-        statusLabel.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
-        statusLabel.setForeground(ModernTheme.ERROR);
+        statusLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        statusLabel.setForeground(new Color(220, 50, 50));
 
         // 组装
         gc.gridy = 0; gc.weighty = 0.7;

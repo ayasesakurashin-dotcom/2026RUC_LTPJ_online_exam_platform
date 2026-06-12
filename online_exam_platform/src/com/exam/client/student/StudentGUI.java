@@ -1,21 +1,19 @@
 package com.exam.client.student;
 
-import com.exam.client.common.ModernTheme;
 import com.exam.client.common.NetworkClient;
 import com.exam.client.common.ResponseListener;
 import com.exam.common.model.*;
 import com.exam.common.protocol.MessageType;
 import com.exam.common.protocol.Request;
 import com.exam.common.protocol.Response;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.Serializable;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class StudentGUI extends JFrame {
 
@@ -41,60 +39,62 @@ public class StudentGUI extends JFrame {
     public StudentGUI(NetworkClient client, String username) {
         this.client = client;
         this.username = username;
-        ModernTheme.install();
         this.client.setListener(new StudentResponseListener());
         initUI();
-        ModernTheme.applyToFrame(this, getContentPane());
         loadExams();
         loadScores();
     }
 
     private void initUI() {
+        // 设置窗口背景色（天蓝色）
+        getContentPane().setBackground(new Color(135, 206, 235));
+        
         setTitle("在线考试系统 · 学生  " + username);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1020, 720);
         setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout(0, 0));
-        root.setBackground(ModernTheme.bg());
+        root.setBackground(new Color(135, 206, 235));
 
-        // Header
+        // Header（顶部栏）
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(ModernTheme.bgDarker());
+        header.setBackground(new Color(100, 180, 220));
         header.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
 
         JPanel headerLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        headerLeft.setBackground(ModernTheme.bgDarker());
+        headerLeft.setBackground(new Color(100, 180, 220));
         JLabel icon = new JLabel("🎓");
         icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
         headerLeft.add(icon);
         JLabel title = new JLabel("学生中心");
-        title.setFont(ModernTheme.SUBHEADING_FONT);
-        title.setForeground(ModernTheme.text());
+        title.setFont(new Font("微软雅黑", Font.BOLD, 18));
+        title.setForeground(Color.WHITE);
         headerLeft.add(title);
         header.add(headerLeft, BorderLayout.WEST);
 
         JPanel headerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        headerRight.setBackground(ModernTheme.bgDarker());
+        headerRight.setBackground(new Color(100, 180, 220));
         statusLabel = new JLabel("就绪");
-        statusLabel.setFont(ModernTheme.SMALL_FONT);
-        statusLabel.setForeground(ModernTheme.subtext());
+        statusLabel.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        statusLabel.setForeground(Color.WHITE);
         headerRight.add(statusLabel);
+        
         JLabel userTag = new JLabel(username);
-        userTag.setFont(new Font("Microsoft YaHei", Font.BOLD, 12));
-        userTag.setForeground(ModernTheme.ACCENT);
+        userTag.setFont(new Font("微软雅黑", Font.BOLD, 12));
+        userTag.setForeground(Color.WHITE);
         userTag.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
         headerRight.add(userTag);
+        
         headerRight.add(logoutButton());
-        headerRight.add(ModernTheme.themeToggle(this));
         header.add(headerRight, BorderLayout.EAST);
         root.add(header, BorderLayout.NORTH);
 
-        // Tabs
+        // Tabs（标签页）
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.setBackground(ModernTheme.bg());
-        tabbedPane.setForeground(ModernTheme.text());
-        tabbedPane.setFont(ModernTheme.TAB_FONT);
+        tabbedPane.setBackground(new Color(135, 206, 235));
+        tabbedPane.setForeground(new Color(50, 50, 50));
+        tabbedPane.setFont(new Font("微软雅黑", Font.PLAIN, 13));
         tabbedPane.addTab("  考试列表  ", buildExamTab());
         tabbedPane.addTab("  我的成绩  ", buildScoreTab());
         root.add(tabbedPane, BorderLayout.CENTER);
@@ -103,18 +103,18 @@ public class StudentGUI extends JFrame {
 
     private JPanel buildExamTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
-        panel.setBackground(ModernTheme.bg());
+        panel.setBackground(new Color(135, 206, 235));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         examModel = new DefaultTableModel(
                 new String[]{"考试ID", "标题", "状态", "开始时间", "时长(秒)", "题数", "总分", "已交卷"}, 0);
-        examTable = ModernTheme.table(examModel);
-        panel.add(ModernTheme.tableScroll(examTable), BorderLayout.CENTER);
+        examTable = createStyledTable(examModel);
+        panel.add(createTableScroll(examTable), BorderLayout.CENTER);
 
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        btnBar.setBackground(ModernTheme.bg());
-        JButton joinBtn  = ModernTheme.primaryButton("→ 加入考试");
-        JButton refreshBtn = ModernTheme.secondaryButton("↻ 刷新");
+        btnBar.setBackground(new Color(135, 206, 235));
+        JButton joinBtn = createPrimaryButton("→ 加入考试");
+        JButton refreshBtn = createSecondaryButton("↻ 刷新");
         joinBtn.addActionListener(e -> joinSelectedExam());
         refreshBtn.addActionListener(e -> { loadExams(); loadScores(); });
         btnBar.add(joinBtn); btnBar.add(refreshBtn);
@@ -125,23 +125,68 @@ public class StudentGUI extends JFrame {
 
     private JPanel buildScoreTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
-        panel.setBackground(ModernTheme.bg());
+        panel.setBackground(new Color(135, 206, 235));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         scoreModel = new DefaultTableModel(
                 new String[]{"考试标题", "得分", "总分", "总正确率",
                         "基础题正确率", "中等题正确率", "提高题正确率", "提交时间"}, 0);
-        scoreTable = ModernTheme.table(scoreModel);
-        panel.add(ModernTheme.tableScroll(scoreTable), BorderLayout.CENTER);
+        scoreTable = createStyledTable(scoreModel);
+        panel.add(createTableScroll(scoreTable), BorderLayout.CENTER);
 
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        btnBar.setBackground(ModernTheme.bg());
-        JButton refreshBtn = ModernTheme.secondaryButton("↻ 刷新");
+        btnBar.setBackground(new Color(135, 206, 235));
+        JButton refreshBtn = createSecondaryButton("↻ 刷新");
         refreshBtn.addActionListener(e -> loadScores());
         btnBar.add(refreshBtn);
         panel.add(btnBar, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    // ==================== 样式工具方法 ====================
+    private JTable createStyledTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setForeground(new Color(50, 50, 50));
+        table.setBackground(Color.WHITE);
+        table.setSelectionBackground(new Color(100, 180, 220));
+        table.setSelectionForeground(Color.WHITE);
+        table.getTableHeader().setFont(new Font("微软雅黑", Font.BOLD, 13));
+        table.getTableHeader().setBackground(new Color(100, 180, 220));
+        table.getTableHeader().setForeground(Color.WHITE);
+        return table;
+    }
+
+    private JScrollPane createTableScroll(JTable table) {
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBackground(Color.WHITE);
+        scroll.getViewport().setBackground(Color.WHITE);
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        return scroll;
+    }
+
+    private JButton createPrimaryButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(70, 130, 200));
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JButton createSecondaryButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(240, 240, 240));
+        btn.setForeground(new Color(70, 130, 200));
+        btn.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     // ==================== 公开方法 ====================
@@ -253,11 +298,11 @@ public class StudentGUI extends JFrame {
     // ==================== 响应处理 ====================
     private JButton logoutButton() {
         JButton btn = new JButton("← 退出");
-        btn.setFont(ModernTheme.SMALL_FONT);
-        btn.setForeground(ModernTheme.subtext());
-        btn.setBackground(ModernTheme.bg());
+        btn.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(new Color(100, 180, 220));
         btn.setBorder(new javax.swing.border.CompoundBorder(
-                new javax.swing.border.LineBorder(ModernTheme.border(), 1),
+                new javax.swing.border.LineBorder(Color.WHITE, 1),
                 new javax.swing.border.EmptyBorder(4, 12, 4, 12)));
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);

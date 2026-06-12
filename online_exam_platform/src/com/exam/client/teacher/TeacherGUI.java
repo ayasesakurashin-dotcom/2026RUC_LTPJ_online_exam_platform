@@ -1,6 +1,5 @@
 package com.exam.client.teacher;
 
-import com.exam.client.common.ModernTheme;
 import com.exam.client.common.NetworkClient;
 import com.exam.client.common.ResponseListener;
 import com.exam.common.model.*;
@@ -8,9 +7,6 @@ import com.exam.common.protocol.MessageType;
 import com.exam.common.protocol.Request;
 import com.exam.common.protocol.Response;
 import com.exam.common.util.QuestionFactory;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -18,6 +14,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class TeacherGUI extends JFrame {
 
@@ -48,53 +46,53 @@ public class TeacherGUI extends JFrame {
     public TeacherGUI(NetworkClient client, String username) {
         this.client = client;
         this.username = username;
-        ModernTheme.install();
         this.client.setListener(new TeacherResponseListener());
         initUI();
-        ModernTheme.applyToFrame(this, getContentPane());
         loadMyExams();
     }
 
     private void initUI() {
+        // 设置窗口背景色（天蓝色）
+        getContentPane().setBackground(new Color(135, 206, 235));
+        
         setTitle("在线考试系统 · 教师  " + username);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1050, 760);
         setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout(0, 0));
-        root.setBackground(ModernTheme.bg());
+        root.setBackground(new Color(135, 206, 235));
 
-        // Header
+        // Header（顶部栏）
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(ModernTheme.bgDarker());
+        header.setBackground(new Color(100, 180, 220));
         header.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
 
         JPanel headerLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        headerLeft.setBackground(ModernTheme.bgDarker());
+        headerLeft.setBackground(new Color(100, 180, 220));
         headerLeft.add(iconLabel("📚"));
         JLabel title = new JLabel("教师工作台");
-        title.setFont(ModernTheme.SUBHEADING_FONT);
-        title.setForeground(ModernTheme.text());
+        title.setFont(new Font("微软雅黑", Font.BOLD, 18));
+        title.setForeground(Color.WHITE);
         headerLeft.add(title);
         header.add(headerLeft, BorderLayout.WEST);
 
         JPanel headerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        headerRight.setBackground(ModernTheme.bgDarker());
+        headerRight.setBackground(new Color(100, 180, 220));
         statusLabel = new JLabel("就绪");
-        statusLabel.setFont(ModernTheme.SMALL_FONT);
-        statusLabel.setForeground(ModernTheme.subtext());
+        statusLabel.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        statusLabel.setForeground(Color.WHITE);
         headerRight.add(statusLabel);
         headerRight.add(userTag());
         headerRight.add(logoutButton());
-        headerRight.add(ModernTheme.themeToggle(this));
         header.add(headerRight, BorderLayout.EAST);
         root.add(header, BorderLayout.NORTH);
 
         // Tabs
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.setBackground(ModernTheme.bg());
-        tabbedPane.setForeground(ModernTheme.text());
-        tabbedPane.setFont(ModernTheme.TAB_FONT);
+        tabbedPane.setBackground(new Color(135, 206, 235));
+        tabbedPane.setForeground(new Color(50, 50, 50));
+        tabbedPane.setFont(new Font("微软雅黑", Font.PLAIN, 13));
         tabbedPane.addTab("  发布考试  ", buildCreateTab());
         tabbedPane.addTab("  我的考试  ", buildMyExamTab());
         tabbedPane.addTab("  批改简答题  ", buildGradingTab());
@@ -107,36 +105,36 @@ public class TeacherGUI extends JFrame {
     // ==================== Tab1: 发布考试 ====================
     private JPanel buildCreateTab() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(ModernTheme.bg());
+        panel.setBackground(new Color(135, 206, 235));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         // 基本信息卡片
         JPanel infoCard = new JPanel(new GridLayout(3, 3, 10, 8));
-        infoCard.setBackground(ModernTheme.surface());
+        infoCard.setBackground(Color.WHITE);
         infoCard.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
-        infoCard.add(label("考试标题"));
-        titleField = ModernTheme.textField(0);
+        infoCard.add(createLabel("考试标题"));
+        titleField = createStyledTextField();
         infoCard.add(titleField);
         infoCard.add(new JLabel()); // spacer
 
-        infoCard.add(label("开始日期 (yyyy-MM-dd)"));
-        dateField = ModernTheme.textField(0);
-        dateField.setText(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        infoCard.add(createLabel("开始日期 (yyyy-MM-dd)"));
+        dateField = createStyledTextField();
+        dateField.setText(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
         infoCard.add(dateField);
-        JButton nowBtn = ModernTheme.secondaryButton("现在");
+        JButton nowBtn = createSecondaryButton("现在");
         nowBtn.addActionListener(e -> {
             Date now = new Date();
-            dateField.setText(new java.text.SimpleDateFormat("yyyy-MM-dd").format(now));
-            timeField.setText(new java.text.SimpleDateFormat("HH:mm").format(now));
+            dateField.setText(new SimpleDateFormat("yyyy-MM-dd").format(now));
+            timeField.setText(new SimpleDateFormat("HH:mm").format(now));
         });
         infoCard.add(nowBtn);
 
-        infoCard.add(label("开始时间 (HH:mm)"));
-        timeField = ModernTheme.textField(0);
-        timeField.setText(new java.text.SimpleDateFormat("HH:mm").format(new Date()));
+        infoCard.add(createLabel("开始时间 (HH:mm)"));
+        timeField = createStyledTextField();
+        timeField.setText(new SimpleDateFormat("HH:mm").format(new Date()));
         infoCard.add(timeField);
-        infoCard.add(label("考试时长（秒）"));
-        durationField = ModernTheme.textField(0);
+        infoCard.add(createLabel("考试时长（秒）"));
+        durationField = createStyledTextField();
         durationField.setText("600");
         infoCard.add(durationField);
         panel.add(infoCard, BorderLayout.NORTH);
@@ -144,25 +142,24 @@ public class TeacherGUI extends JFrame {
         // 题目列表
         questionListModel = new DefaultListModel<>();
         questionList = new JList<>(questionListModel);
-        questionList.setFont(ModernTheme.BODY_FONT);
-        questionList.setBackground(ModernTheme.surface());
-        questionList.setForeground(ModernTheme.text());
-        questionList.setSelectionBackground(ModernTheme.ACCENT);
+        questionList.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        questionList.setBackground(Color.WHITE);
+        questionList.setForeground(new Color(50, 50, 50));
+        questionList.setSelectionBackground(new Color(100, 180, 220));
         questionList.setSelectionForeground(Color.WHITE);
         JScrollPane sp = new JScrollPane(questionList);
-        sp.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1));
-        sp.setBackground(ModernTheme.surface());
-        ModernTheme.styleScrollBar(sp);
+        sp.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        sp.setBackground(Color.WHITE);
         panel.add(sp, BorderLayout.CENTER);
 
         // 按钮
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        btnBar.setBackground(ModernTheme.bg());
-        JButton addChoice = ModernTheme.primaryButton("＋ 选择题");
-        JButton addBlank  = ModernTheme.secondaryButton("＋ 填空题");
-        JButton addEssay  = ModernTheme.secondaryButton("＋ 简答题");
-        JButton removeQ   = ModernTheme.secondaryButton("✕ 删除");
-        JButton publish   = ModernTheme.primaryButton("✔ 发布考试");
+        btnBar.setBackground(new Color(135, 206, 235));
+        JButton addChoice = createPrimaryButton("＋ 选择题");
+        JButton addBlank  = createSecondaryButton("＋ 填空题");
+        JButton addEssay  = createSecondaryButton("＋ 简答题");
+        JButton removeQ   = createSecondaryButton("✕ 删除");
+        JButton publish   = createPrimaryButton("✔ 发布考试");
         addChoice.addActionListener(e -> showAddChoiceDialog());
         addBlank.addActionListener(e -> showAddBlankDialog());
         addEssay.addActionListener(e -> showAddEssayDialog());
@@ -178,17 +175,17 @@ public class TeacherGUI extends JFrame {
     // ==================== Tab2: 我的考试 ====================
     private JPanel buildMyExamTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
-        panel.setBackground(ModernTheme.bg());
+        panel.setBackground(new Color(135, 206, 235));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         myExamModel = new DefaultTableModel(
                 new String[]{"考试ID", "标题", "状态", "时长(秒)", "已加入", "题目数", "总分"}, 0);
-        myExamTable = ModernTheme.table(myExamModel);
-        panel.add(ModernTheme.tableScroll(myExamTable), BorderLayout.CENTER);
+        myExamTable = createStyledTable(myExamModel);
+        panel.add(createTableScroll(myExamTable), BorderLayout.CENTER);
 
         JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        btnBar.setBackground(ModernTheme.bg());
-        JButton refresh = ModernTheme.secondaryButton("↻ 刷新");
+        btnBar.setBackground(new Color(135, 206, 235));
+        JButton refresh = createSecondaryButton("↻ 刷新");
         refresh.addActionListener(e -> loadMyExams());
         btnBar.add(refresh);
         panel.add(btnBar, BorderLayout.SOUTH);
@@ -199,27 +196,28 @@ public class TeacherGUI extends JFrame {
     // ==================== Tab3: 成绩统计 ====================
     private JPanel buildScoreTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 0));
-        panel.setBackground(ModernTheme.bg());
+        panel.setBackground(new Color(135, 206, 235));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         // 上半：已完成的考试
         JPanel topPanel = new JPanel(new BorderLayout(0, 6));
-        topPanel.setBackground(ModernTheme.bg());
+        topPanel.setBackground(Color.WHITE);
         topPanel.setBorder(BorderFactory.createTitledBorder(
-                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
-                "已完成的考试", javax.swing.border.TitledBorder.LEFT,
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                "已完成的考试",
+                javax.swing.border.TitledBorder.LEFT,
                 javax.swing.border.TitledBorder.TOP,
-                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+                new Font("微软雅黑", Font.BOLD, 13), new Color(50, 50, 50)));
 
         finishedExamModel = new DefaultTableModel(
                 new String[]{"考试ID", "标题", "总分", "参加人数"}, 0);
-        finishedExamTable = ModernTheme.table(finishedExamModel);
-        topPanel.add(ModernTheme.tableScroll(finishedExamTable), BorderLayout.CENTER);
+        finishedExamTable = createStyledTable(finishedExamModel);
+        topPanel.add(createTableScroll(finishedExamTable), BorderLayout.CENTER);
 
         JPanel topBtnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 2));
-        topBtnBar.setBackground(ModernTheme.bg());
-        JButton loadFinished = ModernTheme.secondaryButton("↻ 刷新");
-        JButton viewScores  = ModernTheme.primaryButton("→ 查看成绩");
+        topBtnBar.setBackground(Color.WHITE);
+        JButton loadFinished = createSecondaryButton("↻ 刷新");
+        JButton viewScores  = createPrimaryButton("→ 查看成绩");
         loadFinished.addActionListener(e -> loadFinishedExams());
         viewScores.addActionListener(e -> viewSelectedExamScores());
         topBtnBar.add(loadFinished); topBtnBar.add(viewScores);
@@ -227,24 +225,25 @@ public class TeacherGUI extends JFrame {
 
         // 下半：成绩明细
         JPanel bottomPanel = new JPanel(new BorderLayout(0, 6));
-        bottomPanel.setBackground(ModernTheme.bg());
+        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(BorderFactory.createTitledBorder(
-                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
-                "成绩明细", javax.swing.border.TitledBorder.LEFT,
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                "成绩明细",
+                javax.swing.border.TitledBorder.LEFT,
                 javax.swing.border.TitledBorder.TOP,
-                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+                new Font("微软雅黑", Font.BOLD, 13), new Color(50, 50, 50)));
 
         scoreDetailModel = new DefaultTableModel(
                 new String[]{"学生", "得分", "总分", "总正确率",
                         "基础题正确率", "中等题正确率", "提高题正确率", "提交时间"}, 0);
-        scoreDetailTable = ModernTheme.table(scoreDetailModel);
-        bottomPanel.add(ModernTheme.tableScroll(scoreDetailTable), BorderLayout.CENTER);
+        scoreDetailTable = createStyledTable(scoreDetailModel);
+        bottomPanel.add(createTableScroll(scoreDetailTable), BorderLayout.CENTER);
 
         // 统计条
         statsLabel = new JLabel(" ");
-        statsLabel.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
-        statsLabel.setForeground(ModernTheme.text());
-        statsLabel.setBackground(ModernTheme.bgDarker());
+        statsLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        statsLabel.setForeground(new Color(50, 50, 50));
+        statsLabel.setBackground(new Color(240, 248, 255));
         statsLabel.setOpaque(true);
         statsLabel.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
         bottomPanel.add(statsLabel, BorderLayout.SOUTH);
@@ -260,15 +259,15 @@ public class TeacherGUI extends JFrame {
 
     // ==================== 添加题目对话框 ====================
     private void showAddChoiceDialog() {
-        JTextField contentField = ModernTheme.textField(24);
-        JTextField scoreField = ModernTheme.textField(6);
+        JTextField contentField = createStyledTextField();
+        JTextField scoreField = createStyledTextField();
         scoreField.setText("5");
         JTextArea optionsArea = new JTextArea(4, 24);
         optionsArea.setText("选项1\n选项2\n选项3\n选项4");
-        optionsArea.setFont(ModernTheme.BODY_FONT);
-        optionsArea.setBackground(ModernTheme.surface());
-        optionsArea.setForeground(ModernTheme.text());
-        JTextField correctField = ModernTheme.textField(6);
+        optionsArea.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        optionsArea.setBackground(Color.WHITE);
+        optionsArea.setForeground(new Color(50, 50, 50));
+        JTextField correctField = createStyledTextField();
         correctField.setText("0");
 
         // 难度单选
@@ -277,21 +276,21 @@ public class TeacherGUI extends JFrame {
         JRadioButton advancedR = new JRadioButton("提高题");
         ButtonGroup diffGroup = new ButtonGroup();
         diffGroup.add(basicR); diffGroup.add(mediumR); diffGroup.add(advancedR);
-        basicR.setBackground(ModernTheme.surface()); basicR.setForeground(ModernTheme.text());
-        mediumR.setBackground(ModernTheme.surface()); mediumR.setForeground(ModernTheme.text());
-        advancedR.setBackground(ModernTheme.surface()); advancedR.setForeground(ModernTheme.text());
+        basicR.setBackground(Color.WHITE); basicR.setForeground(new Color(50, 50, 50));
+        mediumR.setBackground(Color.WHITE); mediumR.setForeground(new Color(50, 50, 50));
+        advancedR.setBackground(Color.WHITE); advancedR.setForeground(new Color(50, 50, 50));
         JPanel diffPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        diffPanel.setBackground(ModernTheme.surface());
+        diffPanel.setBackground(Color.WHITE);
         diffPanel.add(basicR); diffPanel.add(mediumR); diffPanel.add(advancedR);
 
         JPanel panel = new JPanel(new GridLayout(5, 2, 6, 8));
-        panel.setBackground(ModernTheme.surface());
+        panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-        panel.add(label("题目内容"));   panel.add(contentField);
-        panel.add(label("分值"));       panel.add(scoreField);
-        panel.add(label("难度（必选）")); panel.add(diffPanel);
-        panel.add(label("选项（每行一个）")); panel.add(new JScrollPane(optionsArea));
-        panel.add(label("正确索引（0开始）"));  panel.add(correctField);
+        panel.add(createLabel("题目内容"));   panel.add(contentField);
+        panel.add(createLabel("分值"));       panel.add(scoreField);
+        panel.add(createLabel("难度（必选）")); panel.add(diffPanel);
+        panel.add(createLabel("选项（每行一个）")); panel.add(new JScrollPane(optionsArea));
+        panel.add(createLabel("正确索引（0开始）"));  panel.add(correctField);
 
         int r = JOptionPane.showConfirmDialog(this, panel, "添加选择题",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -313,30 +312,30 @@ public class TeacherGUI extends JFrame {
     }
 
     private void showAddBlankDialog() {
-        JTextField contentField = ModernTheme.textField(24);
-        JTextField scoreField = ModernTheme.textField(6);
+        JTextField contentField = createStyledTextField();
+        JTextField scoreField = createStyledTextField();
         scoreField.setText("5");
-        JTextField answerField = ModernTheme.textField(14);
+        JTextField answerField = createStyledTextField();
 
         JRadioButton basicR = new JRadioButton("基础题", true);
         JRadioButton mediumR = new JRadioButton("中等题");
         JRadioButton advancedR = new JRadioButton("提高题");
         ButtonGroup diffGroup = new ButtonGroup();
         diffGroup.add(basicR); diffGroup.add(mediumR); diffGroup.add(advancedR);
-        basicR.setBackground(ModernTheme.surface()); basicR.setForeground(ModernTheme.text());
-        mediumR.setBackground(ModernTheme.surface()); mediumR.setForeground(ModernTheme.text());
-        advancedR.setBackground(ModernTheme.surface()); advancedR.setForeground(ModernTheme.text());
+        basicR.setBackground(Color.WHITE); basicR.setForeground(new Color(50, 50, 50));
+        mediumR.setBackground(Color.WHITE); mediumR.setForeground(new Color(50, 50, 50));
+        advancedR.setBackground(Color.WHITE); advancedR.setForeground(new Color(50, 50, 50));
         JPanel diffPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        diffPanel.setBackground(ModernTheme.surface());
+        diffPanel.setBackground(Color.WHITE);
         diffPanel.add(basicR); diffPanel.add(mediumR); diffPanel.add(advancedR);
 
         JPanel panel = new JPanel(new GridLayout(4, 2, 6, 8));
-        panel.setBackground(ModernTheme.surface());
+        panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-        panel.add(label("题目内容"));   panel.add(contentField);
-        panel.add(label("分值"));       panel.add(scoreField);
-        panel.add(label("难度（必选）")); panel.add(diffPanel);
-        panel.add(label("正确答案"));   panel.add(answerField);
+        panel.add(createLabel("题目内容"));   panel.add(contentField);
+        panel.add(createLabel("分值"));       panel.add(scoreField);
+        panel.add(createLabel("难度（必选）")); panel.add(diffPanel);
+        panel.add(createLabel("正确答案"));   panel.add(answerField);
 
         int r = JOptionPane.showConfirmDialog(this, panel, "添加填空题",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -357,13 +356,13 @@ public class TeacherGUI extends JFrame {
     }
 
     private void showAddEssayDialog() {
-        JTextField contentField = ModernTheme.textField(24);
-        JTextField scoreField = ModernTheme.textField(6);
+        JTextField contentField = createStyledTextField();
+        JTextField scoreField = createStyledTextField();
         scoreField.setText("10");
         JTextArea refAnswerArea = new JTextArea(4, 24);
-        refAnswerArea.setFont(ModernTheme.BODY_FONT);
-        refAnswerArea.setBackground(ModernTheme.surface());
-        refAnswerArea.setForeground(ModernTheme.text());
+        refAnswerArea.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        refAnswerArea.setBackground(Color.WHITE);
+        refAnswerArea.setForeground(new Color(50, 50, 50));
         refAnswerArea.setLineWrap(true);
         refAnswerArea.setWrapStyleWord(true);
 
@@ -372,20 +371,20 @@ public class TeacherGUI extends JFrame {
         JRadioButton advancedR = new JRadioButton("提高题");
         ButtonGroup diffGroup = new ButtonGroup();
         diffGroup.add(basicR); diffGroup.add(mediumR); diffGroup.add(advancedR);
-        basicR.setBackground(ModernTheme.surface()); basicR.setForeground(ModernTheme.text());
-        mediumR.setBackground(ModernTheme.surface()); mediumR.setForeground(ModernTheme.text());
-        advancedR.setBackground(ModernTheme.surface()); advancedR.setForeground(ModernTheme.text());
+        basicR.setBackground(Color.WHITE); basicR.setForeground(new Color(50, 50, 50));
+        mediumR.setBackground(Color.WHITE); mediumR.setForeground(new Color(50, 50, 50));
+        advancedR.setBackground(Color.WHITE); advancedR.setForeground(new Color(50, 50, 50));
         JPanel diffPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        diffPanel.setBackground(ModernTheme.surface());
+        diffPanel.setBackground(Color.WHITE);
         diffPanel.add(basicR); diffPanel.add(mediumR); diffPanel.add(advancedR);
 
         JPanel panel = new JPanel(new GridLayout(4, 2, 6, 8));
-        panel.setBackground(ModernTheme.surface());
+        panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-        panel.add(label("题目内容"));   panel.add(contentField);
-        panel.add(label("分值"));       panel.add(scoreField);
-        panel.add(label("难度（必选）")); panel.add(diffPanel);
-        panel.add(label("参考答案"));   panel.add(new JScrollPane(refAnswerArea));
+        panel.add(createLabel("题目内容"));   panel.add(contentField);
+        panel.add(createLabel("分值"));       panel.add(scoreField);
+        panel.add(createLabel("难度（必选）")); panel.add(diffPanel);
+        panel.add(createLabel("参考答案"));   panel.add(new JScrollPane(refAnswerArea));
 
         int r = JOptionPane.showConfirmDialog(this, panel, "添加简答题",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -421,31 +420,32 @@ public class TeacherGUI extends JFrame {
 
     private JPanel buildGradingTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 0));
-        panel.setBackground(ModernTheme.bg());
+        panel.setBackground(new Color(135, 206, 235));
         panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
         // Left: exam list + student list
         JPanel leftPanel = new JPanel(new BorderLayout(0, 8));
-        leftPanel.setBackground(ModernTheme.bg());
+        leftPanel.setBackground(new Color(135, 206, 235));
         leftPanel.setPreferredSize(new Dimension(320, 0));
 
         // Exam list
         JPanel examPanel = new JPanel(new BorderLayout(0, 4));
-        examPanel.setBackground(ModernTheme.bg());
+        examPanel.setBackground(Color.WHITE);
         examPanel.setBorder(BorderFactory.createTitledBorder(
-                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
-                "含简答题的考试", javax.swing.border.TitledBorder.LEFT,
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                "含简答题的考试",
+                javax.swing.border.TitledBorder.LEFT,
                 javax.swing.border.TitledBorder.TOP,
-                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+                new Font("微软雅黑", Font.BOLD, 13), new Color(50, 50, 50)));
 
         gradingExamModel = new DefaultTableModel(new String[]{"考试ID", "标题", "发布状态"}, 0);
-        gradingExamTable = ModernTheme.table(gradingExamModel);
-        examPanel.add(ModernTheme.tableScroll(gradingExamTable), BorderLayout.CENTER);
+        gradingExamTable = createStyledTable(gradingExamModel);
+        examPanel.add(createTableScroll(gradingExamTable), BorderLayout.CENTER);
 
         JPanel examBtnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        examBtnBar.setBackground(ModernTheme.bg());
-        JButton refreshExams = ModernTheme.secondaryButton("↻ 刷新");
-        JButton selectExam = ModernTheme.primaryButton("→ 查看提交");
+        examBtnBar.setBackground(Color.WHITE);
+        JButton refreshExams = createSecondaryButton("↻ 刷新");
+        JButton selectExam = createPrimaryButton("→ 查看提交");
         refreshExams.addActionListener(e -> loadGradingExams());
         selectExam.addActionListener(e -> loadGradingStudents());
         examBtnBar.add(refreshExams); examBtnBar.add(selectExam);
@@ -454,20 +454,21 @@ public class TeacherGUI extends JFrame {
 
         // Student list
         JPanel studentPanel = new JPanel(new BorderLayout(0, 4));
-        studentPanel.setBackground(ModernTheme.bg());
+        studentPanel.setBackground(Color.WHITE);
         studentPanel.setBorder(BorderFactory.createTitledBorder(
-                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
-                "已提交学生", javax.swing.border.TitledBorder.LEFT,
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                "已提交学生",
+                javax.swing.border.TitledBorder.LEFT,
                 javax.swing.border.TitledBorder.TOP,
-                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
+                new Font("微软雅黑", Font.BOLD, 13), new Color(50, 50, 50)));
 
         gradingStudentModel = new DefaultTableModel(new String[]{"学生", "批改状态"}, 0);
-        gradingStudentTable = ModernTheme.table(gradingStudentModel);
-        studentPanel.add(ModernTheme.tableScroll(gradingStudentTable), BorderLayout.CENTER);
+        gradingStudentTable = createStyledTable(gradingStudentModel);
+        studentPanel.add(createTableScroll(gradingStudentTable), BorderLayout.CENTER);
 
         JPanel stuBtnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
-        stuBtnBar.setBackground(ModernTheme.bg());
-        JButton selectStudent = ModernTheme.primaryButton("→ 批改");
+        stuBtnBar.setBackground(Color.WHITE);
+        JButton selectStudent = createPrimaryButton("→ 批改");
         selectStudent.addActionListener(e -> loadStudentEssays());
         stuBtnBar.add(selectStudent);
         studentPanel.add(stuBtnBar, BorderLayout.SOUTH);
@@ -476,24 +477,24 @@ public class TeacherGUI extends JFrame {
         // Right: grading form
         gradingPanel = new JPanel();
         gradingPanel.setLayout(new BoxLayout(gradingPanel, BoxLayout.Y_AXIS));
-        gradingPanel.setBackground(ModernTheme.bg());
+        gradingPanel.setBackground(new Color(135, 206, 235));
         gradingPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JLabel placeholder = new JLabel("请先选择考试和学生");
-        placeholder.setFont(ModernTheme.BODY_FONT);
-        placeholder.setForeground(ModernTheme.subtext());
+        placeholder.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        placeholder.setForeground(new Color(100, 100, 100));
         gradingPanel.add(placeholder);
 
         gradingScroll = new JScrollPane(gradingPanel);
         gradingScroll.setBorder(BorderFactory.createTitledBorder(
-                new ModernTheme.RoundedBorder(ModernTheme.border(), 8, 1),
-                "简答题批改", javax.swing.border.TitledBorder.LEFT,
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                "简答题批改",
+                javax.swing.border.TitledBorder.LEFT,
                 javax.swing.border.TitledBorder.TOP,
-                ModernTheme.SUBHEADING_FONT, ModernTheme.text()));
-        gradingScroll.setBackground(ModernTheme.bg());
-        gradingScroll.getViewport().setBackground(ModernTheme.bg());
+                new Font("微软雅黑", Font.BOLD, 13), new Color(50, 50, 50)));
+        gradingScroll.setBackground(new Color(135, 206, 235));
+        gradingScroll.getViewport().setBackground(new Color(135, 206, 235));
         gradingScroll.getVerticalScrollBar().setUnitIncrement(16);
-        ModernTheme.styleScrollBar(gradingScroll);
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, gradingScroll);
         split.setDividerLocation(320);
@@ -503,9 +504,9 @@ public class TeacherGUI extends JFrame {
 
         // Bottom buttons
         JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        bottomBar.setBackground(ModernTheme.bg());
-        JButton saveBtn = ModernTheme.primaryButton("✔ 保存评分");
-        JButton publishBtn = ModernTheme.dangerButton("📢 发布成绩");
+        bottomBar.setBackground(new Color(135, 206, 235));
+        JButton saveBtn = createPrimaryButton("✔ 保存评分");
+        JButton publishBtn = createDangerButton("📢 发布成绩");
         saveBtn.addActionListener(e -> saveEssayGrades());
         publishBtn.addActionListener(e -> publishExamScores());
         bottomBar.add(saveBtn); bottomBar.add(publishBtn);
@@ -600,44 +601,44 @@ public class TeacherGUI extends JFrame {
 
             JPanel card = new JPanel();
             card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-            card.setBackground(ModernTheme.surface());
+            card.setBackground(Color.WHITE);
             card.setBorder(BorderFactory.createCompoundBorder(
-                    new ModernTheme.RoundedBorder(ModernTheme.border(), 10, 1),
+                    BorderFactory.createLineBorder(new Color(200, 200, 200)),
                     BorderFactory.createEmptyBorder(12, 16, 12, 16)));
             card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
             card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JLabel titleLabel = new JLabel("简答题 " + idx + "  (" + eq.getScore() + "分)");
-            titleLabel.setFont(new Font("Microsoft YaHei", Font.BOLD, 14));
-            titleLabel.setForeground(ModernTheme.ACCENT);
+            titleLabel.setFont(new Font("微软雅黑", Font.BOLD, 14));
+            titleLabel.setForeground(new Color(70, 130, 200));
             titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             card.add(titleLabel);
             card.add(Box.createVerticalStrut(6));
 
             JLabel contentLabel = new JLabel("<html><b>题目：</b>" + eq.getContent() + "</html>");
-            contentLabel.setFont(ModernTheme.BODY_FONT);
-            contentLabel.setForeground(ModernTheme.text());
+            contentLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+            contentLabel.setForeground(new Color(50, 50, 50));
             contentLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             card.add(contentLabel);
             card.add(Box.createVerticalStrut(4));
 
             JLabel refLabel = new JLabel("<html><b>参考答案：</b>" + eq.getReferenceAnswer() + "</html>");
-            refLabel.setFont(ModernTheme.BODY_FONT);
-            refLabel.setForeground(ModernTheme.subtext());
+            refLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+            refLabel.setForeground(new Color(100, 100, 100));
             refLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             card.add(refLabel);
             card.add(Box.createVerticalStrut(6));
 
             JLabel ansLabel = new JLabel("<html><b>学生答案：</b></html>");
-            ansLabel.setFont(ModernTheme.BODY_FONT);
-            ansLabel.setForeground(ModernTheme.text());
+            ansLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+            ansLabel.setForeground(new Color(50, 50, 50));
             ansLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             card.add(ansLabel);
 
             JTextArea ansArea = new JTextArea(studentAnswer);
-            ansArea.setFont(ModernTheme.BODY_FONT);
-            ansArea.setBackground(ModernTheme.bg());
-            ansArea.setForeground(ModernTheme.text());
+            ansArea.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+            ansArea.setBackground(new Color(245, 245, 245));
+            ansArea.setForeground(new Color(50, 50, 50));
             ansArea.setEditable(false);
             ansArea.setLineWrap(true);
             ansArea.setWrapStyleWord(true);
@@ -645,23 +646,24 @@ public class TeacherGUI extends JFrame {
             JScrollPane sp = new JScrollPane(ansArea);
             sp.setAlignmentX(Component.LEFT_ALIGNMENT);
             sp.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-            sp.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 6, 1));
+            sp.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
             card.add(sp);
             card.add(Box.createVerticalStrut(6));
 
             JPanel scoreRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-            scoreRow.setBackground(ModernTheme.surface());
+            scoreRow.setBackground(Color.WHITE);
             scoreRow.setAlignmentX(Component.LEFT_ALIGNMENT);
             JLabel scoreHint = new JLabel("评分 (0~" + eq.getScore() + ")：");
-            scoreHint.setFont(new Font("Microsoft YaHei", Font.BOLD, 13));
-            scoreHint.setForeground(ModernTheme.text());
+            scoreHint.setFont(new Font("微软雅黑", Font.BOLD, 13));
+            scoreHint.setForeground(new Color(50, 50, 50));
             scoreRow.add(scoreHint);
-            JTextField scoreField = ModernTheme.textField(6);
+            JTextField scoreField = createStyledTextField();
+            scoreField.setPreferredSize(new Dimension(80, 30));
             if (existingScore >= 0) scoreField.setText(String.valueOf(existingScore));
             scoreRow.add(scoreField);
             JLabel maxLabel = new JLabel(" / " + eq.getScore());
-            maxLabel.setFont(ModernTheme.BODY_FONT);
-            maxLabel.setForeground(ModernTheme.subtext());
+            maxLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+            maxLabel.setForeground(new Color(100, 100, 100));
             scoreRow.add(maxLabel);
             card.add(scoreRow);
 
@@ -729,8 +731,8 @@ public class TeacherGUI extends JFrame {
     private void clearGradingPanel() {
         gradingPanel.removeAll();
         JLabel placeholder = new JLabel("请选择学生进行批改");
-        placeholder.setFont(ModernTheme.BODY_FONT);
-        placeholder.setForeground(ModernTheme.subtext());
+        placeholder.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        placeholder.setForeground(new Color(100, 100, 100));
         gradingPanel.add(placeholder);
         gradingPanel.revalidate();
         gradingPanel.repaint();
@@ -767,7 +769,7 @@ public class TeacherGUI extends JFrame {
         long startTime;
         try {
             String dt = dateField.getText().trim() + " " + timeField.getText().trim();
-            startTime = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").parse(dt).getTime();
+            startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(dt).getTime();
         } catch (Exception e) { setStatus("日期/时间格式错误"); return; }
 
         Exam exam = new Exam(UUID.randomUUID().toString().substring(0, 8), t, username, dur, startTime);
@@ -882,10 +884,78 @@ public class TeacherGUI extends JFrame {
         }
     }
 
-    private JLabel label(String text) {
+    // ==================== 样式工具方法 ====================
+    
+    private JTable createStyledTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setForeground(new Color(50, 50, 50));
+        table.setBackground(Color.WHITE);
+        table.setSelectionBackground(new Color(100, 180, 220));
+        table.setSelectionForeground(Color.WHITE);
+        table.getTableHeader().setFont(new Font("微软雅黑", Font.BOLD, 13));
+        table.getTableHeader().setBackground(new Color(100, 180, 220));
+        table.getTableHeader().setForeground(Color.WHITE);
+        return table;
+    }
+
+    private JScrollPane createTableScroll(JTable table) {
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBackground(Color.WHITE);
+        scroll.getViewport().setBackground(Color.WHITE);
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        return scroll;
+    }
+
+    private JButton createPrimaryButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(70, 130, 200));
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JButton createSecondaryButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(240, 240, 240));
+        btn.setForeground(new Color(70, 130, 200));
+        btn.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JButton createDangerButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(220, 80, 80));
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JTextField createStyledTextField() {
+        JTextField field = new JTextField();
+        field.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        field.setBackground(Color.WHITE);
+        field.setForeground(new Color(50, 50, 50));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        return field;
+    }
+
+    private JLabel createLabel(String text) {
         JLabel l = new JLabel(text);
-        l.setFont(new Font("Microsoft YaHei", Font.BOLD, 13));
-        l.setForeground(ModernTheme.text());
+        l.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        l.setForeground(new Color(50, 50, 50));
         return l;
     }
 
@@ -897,8 +967,8 @@ public class TeacherGUI extends JFrame {
 
     private JLabel userTag() {
         JLabel l = new JLabel(username);
-        l.setFont(new Font("Microsoft YaHei", Font.BOLD, 12));
-        l.setForeground(ModernTheme.ACCENT);
+        l.setFont(new Font("微软雅黑", Font.BOLD, 12));
+        l.setForeground(Color.WHITE);
         l.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
         return l;
     }
@@ -909,11 +979,11 @@ public class TeacherGUI extends JFrame {
 
     private JButton logoutButton() {
         JButton btn = new JButton("← 退出");
-        btn.setFont(ModernTheme.SMALL_FONT);
-        btn.setForeground(ModernTheme.subtext());
-        btn.setBackground(ModernTheme.bg());
+        btn.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(new Color(100, 180, 220));
         btn.setBorder(new javax.swing.border.CompoundBorder(
-                new javax.swing.border.LineBorder(ModernTheme.border(), 1),
+                new javax.swing.border.LineBorder(Color.WHITE, 1),
                 new javax.swing.border.EmptyBorder(4, 12, 4, 12)));
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);

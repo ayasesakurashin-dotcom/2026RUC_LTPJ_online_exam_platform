@@ -1,19 +1,17 @@
 package com.exam.client;
 
-import com.exam.client.common.ModernTheme;
 import com.exam.client.common.NetworkClient;
 import com.exam.client.common.ResponseListener;
 import com.exam.common.protocol.MessageType;
 import com.exam.common.protocol.Request;
 import com.exam.common.protocol.Response;
-
-import javax.swing.*;
 import java.awt.*;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.swing.*;
 
 public class RegisterGUI extends JFrame {
 
@@ -33,9 +31,7 @@ public class RegisterGUI extends JFrame {
         this.client = client;
         this.previousListener = previousListener;
         this.client.setListener(new RegisterResponseListener());
-        ModernTheme.install();
         initUI();
-        ModernTheme.applyToFrame(this, getContentPane());
     }
 
     @Override
@@ -45,6 +41,9 @@ public class RegisterGUI extends JFrame {
     }
 
     private void initUI() {
+        // 设置窗口背景色（天蓝色）
+        getContentPane().setBackground(new Color(135, 206, 235));
+        
         setTitle("注册新账号 — 在线考试系统");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(520, 560);
@@ -52,47 +51,54 @@ public class RegisterGUI extends JFrame {
         setResizable(false);
 
         JPanel root = new JPanel(new GridBagLayout());
-        root.setBackground(ModernTheme.bg());
+        root.setBackground(new Color(135, 206, 235));
 
-        // Card
+        // 主体卡片（白色背景）
         JPanel card = new JPanel();
-        card.setBackground(ModernTheme.surface());
-        card.setBorder(new ModernTheme.RoundedBorder(ModernTheme.border(), 16, 1));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(440, 380));
+        card.setPreferredSize(new Dimension(440, 420));
 
-        // Logo
+        // Logo 区域（白色背景）
         JPanel logoPanel = new JPanel(new BorderLayout());
-        logoPanel.setBackground(ModernTheme.surface());
+        logoPanel.setBackground(Color.WHITE);
         logoPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 0, 30));
         logoPanel.setMaximumSize(new Dimension(440, 80));
+        
         JLabel icon = new JLabel("✨", SwingConstants.CENTER);
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
         logoPanel.add(icon, BorderLayout.CENTER);
+        
         JLabel title = new JLabel("创建新账号", SwingConstants.CENTER);
-        title.setFont(ModernTheme.HEADING_FONT);
-        title.setForeground(ModernTheme.text());
+        title.setFont(new Font("微软雅黑", Font.BOLD, 24));
+        title.setForeground(new Color(25, 25, 112));
         logoPanel.add(title, BorderLayout.SOUTH);
         card.add(logoPanel);
         card.add(Box.createVerticalStrut(20));
 
-        // Fields
+        // 输入区域（白色背景）
         JPanel fieldPanel = new JPanel();
-        fieldPanel.setBackground(ModernTheme.surface());
+        fieldPanel.setBackground(Color.WHITE);
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
         fieldPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 30));
-        fieldPanel.setMaximumSize(new Dimension(440, 200));
+        fieldPanel.setMaximumSize(new Dimension(440, 220));
 
         fieldPanel.add(fieldLabel("用户名"));
         fieldPanel.add(Box.createVerticalStrut(4));
-        usernameField = ModernTheme.textField(0);
+        usernameField = new JTextField();
+        usernameField.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         fieldPanel.add(usernameField);
         fieldPanel.add(Box.createVerticalStrut(12));
 
         fieldPanel.add(fieldLabel("密码"));
         fieldPanel.add(Box.createVerticalStrut(4));
-        passwordField = ModernTheme.passwordField(0);
+        passwordField = new JPasswordField();
+        passwordField.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         fieldPanel.add(passwordField);
         fieldPanel.add(Box.createVerticalStrut(12));
@@ -100,36 +106,44 @@ public class RegisterGUI extends JFrame {
         fieldPanel.add(fieldLabel("角色"));
         fieldPanel.add(Box.createVerticalStrut(4));
         roleBox = new JComboBox<>(new String[]{"学生", "教师"});
-        roleBox.setFont(ModernTheme.BODY_FONT);
-        roleBox.setBackground(ModernTheme.surface());
-        roleBox.setForeground(ModernTheme.text());
+        roleBox.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        roleBox.setBackground(Color.WHITE);
+        roleBox.setForeground(new Color(50, 50, 50));
         roleBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        ((JComponent) roleBox.getRenderer()).setFont(ModernTheme.BODY_FONT);
+        ((JComponent) roleBox.getRenderer()).setFont(new Font("微软雅黑", Font.PLAIN, 14));
         fieldPanel.add(roleBox);
 
         card.add(fieldPanel);
         card.add(Box.createVerticalStrut(20));
 
-        // Register button
+        // 注册按钮
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        btnPanel.setBackground(ModernTheme.surface());
+        btnPanel.setBackground(Color.WHITE);
         btnPanel.setMaximumSize(new Dimension(440, 50));
-        registerBtn = ModernTheme.primaryButton("注  册");
+        
+        registerBtn = new JButton("注  册");
+        registerBtn.setBackground(new Color(25, 100, 180));
+        registerBtn.setForeground(Color.WHITE);
+        registerBtn.setFont(new Font("微软雅黑", Font.BOLD, 16));
+        registerBtn.setFocusPainted(false);
+        registerBtn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         registerBtn.setPreferredSize(new Dimension(380, 44));
+        registerBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         registerBtn.addActionListener(e -> doRegister());
         btnPanel.add(registerBtn);
         card.add(btnPanel);
         card.add(Box.createVerticalStrut(8));
 
-        // Back link
+        // 返回登录链接
         JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        linkPanel.setBackground(ModernTheme.surface());
+        linkPanel.setBackground(Color.WHITE);
         linkPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 20, 30));
         linkPanel.setMaximumSize(new Dimension(440, 40));
+        
         JButton backLink = new JButton("← 返回登录");
-        backLink.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
-        backLink.setForeground(ModernTheme.ACCENT);
-        backLink.setBackground(ModernTheme.surface());
+        backLink.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        backLink.setForeground(new Color(70, 130, 200));
+        backLink.setBackground(Color.WHITE);
         backLink.setBorder(BorderFactory.createEmptyBorder());
         backLink.setFocusPainted(false);
         backLink.setContentAreaFilled(false);
@@ -138,13 +152,14 @@ public class RegisterGUI extends JFrame {
         linkPanel.add(backLink);
         card.add(linkPanel);
 
-        // Status
+        // 状态标签
         statusLabel = new JLabel(" ", SwingConstants.CENTER);
-        statusLabel.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
-        statusLabel.setForeground(ModernTheme.subtext());
+        statusLabel.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        statusLabel.setForeground(new Color(220, 50, 50));
 
+        // 组装
         JPanel wrapper = new JPanel(new GridBagLayout());
-        wrapper.setBackground(ModernTheme.bg());
+        wrapper.setBackground(new Color(135, 206, 235));
         GridBagConstraints gc = new GridBagConstraints();
         gc.gridy = 0; gc.weighty = 0.8; gc.fill = GridBagConstraints.NONE;
         wrapper.add(card, gc);
@@ -158,8 +173,8 @@ public class RegisterGUI extends JFrame {
 
     private JLabel fieldLabel(String text) {
         JLabel l = new JLabel(text);
-        l.setFont(new Font("Microsoft YaHei", Font.BOLD, 12));
-        l.setForeground(ModernTheme.subtext());
+        l.setFont(new Font("微软雅黑", Font.BOLD, 13));
+        l.setForeground(new Color(80, 80, 80));
         return l;
     }
 
@@ -168,7 +183,7 @@ public class RegisterGUI extends JFrame {
         String password = new String(passwordField.getPassword()).trim();
         if (username.isEmpty() || password.isEmpty()) {
             statusLabel.setText("请输入用户名和密码");
-            statusLabel.setForeground(ModernTheme.ERROR);
+            statusLabel.setForeground(new Color(220, 50, 50));
             return;
         }
 
@@ -190,28 +205,28 @@ public class RegisterGUI extends JFrame {
                     if (lastResponse != null && "OK".equals(lastResponse.getStatus())) {
                         SwingUtilities.invokeLater(() -> {
                             statusLabel.setText("注册成功！请返回登录。");
-                            statusLabel.setForeground(ModernTheme.SUCCESS);
+                            statusLabel.setForeground(new Color(60, 179, 113));
                             setLoading(false);
                         });
                     } else {
                         String msg = lastResponse != null ? lastResponse.getMessage() : "注册失败";
                         SwingUtilities.invokeLater(() -> {
                             statusLabel.setText(msg);
-                            statusLabel.setForeground(ModernTheme.ERROR);
+                            statusLabel.setForeground(new Color(220, 50, 50));
                             setLoading(false);
                         });
                     }
                 } else {
                     SwingUtilities.invokeLater(() -> {
                         statusLabel.setText("连接超时");
-                        statusLabel.setForeground(ModernTheme.ERROR);
+                        statusLabel.setForeground(new Color(220, 50, 50));
                         setLoading(false);
                     });
                 }
             } catch (Exception ex) {
                 SwingUtilities.invokeLater(() -> {
                     statusLabel.setText("网络错误");
-                    statusLabel.setForeground(ModernTheme.ERROR);
+                    statusLabel.setForeground(new Color(220, 50, 50));
                     setLoading(false);
                 });
             }
